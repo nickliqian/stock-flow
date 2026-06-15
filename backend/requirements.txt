@@ -1,0 +1,8 @@
+# [修改] 问题7：为每个依赖添加 >= 最低兼容版本约束
+fastapi>=0.104.0
+uvicorn>=0.24.0
+sqlalchemy>=2.0.0
+tushare>=1.4.0
+pandas>=2.0.0
+apscheduler>=3.10.0
+python-dotenv>=1.0.0
