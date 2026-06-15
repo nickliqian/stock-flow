@@ -17,8 +17,8 @@ router = APIRouter(prefix="/api/research-browser", tags=["research-browser"])
 # 研究资料根目录（展开 ~）
 RESEARCH_ROOT = Path(os.path.expanduser("~/projects/stock-research")).resolve()
 
-# 只允许浏览这三个子目录
-ALLOWED_SUBDIRS = {"raw", "insights", "logs"}
+# 只允许浏览这些子目录
+ALLOWED_SUBDIRS = {"raw", "insights", "library", "archive", "logs"}
 
 # 目录树最大递归深度
 MAX_DEPTH = 3
