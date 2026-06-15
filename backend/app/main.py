@@ -28,6 +28,7 @@ from .routes.portfolio import router as portfolio_router
 from .routes.multi_timeframe import router as multi_timeframe_router
 from .routes.research_browser import router as research_browser_router
 from .routes.volatility import router as volatility_router
+from .routes.signal_alert import router as signal_alert_router
 from .scheduler import DataScheduler
 
 # Configure logging
@@ -115,6 +116,7 @@ app.include_router(portfolio_router)
 app.include_router(multi_timeframe_router)
 app.include_router(research_browser_router)
 app.include_router(volatility_router)
+app.include_router(signal_alert_router)
 
 
 @app.exception_handler(Exception)

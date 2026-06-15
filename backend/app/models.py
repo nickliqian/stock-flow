@@ -530,6 +530,28 @@ class ActivityLog(Base):
     )
 
 
+class StrategySignal(Base):
+    """策略信号记录——记录每个策略对每只股票的信号。"""
+    __tablename__ = "strategy_signal"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    trade_date = Column(String(8), nullable=False, index=True)
+    ts_code = Column(String(16), nullable=False, index=True)
+    name = Column(String(32))
+    strategy_name = Column(String(64), nullable=False)
+    score = Column(Float)
+    signal_type = Column(String(16))  # 'bullish' / 'bearish' / 'neutral'
+    details = Column(String(512))    # JSON string with signal details
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        Index("ix_signal_date", "trade_date"),
+        Index("ix_signal_code", "ts_code"),
+        Index("ix_signal_strategy", "strategy_name"),
+        Index("ix_signal_date_code", "trade_date", "ts_code"),
+    )
+
+
 # Engine & session factory — lazy initialization via init_db()
 # No module-level side effects: os.makedirs and create_engine are deferred.
 

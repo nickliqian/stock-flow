@@ -21,6 +21,7 @@ import {
   PieChartOutlined,
   RiseOutlined,
   BookOutlined,
+  AlertOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
@@ -55,6 +56,7 @@ const PortfolioBuilder = React.lazy(() => import('./pages/PortfolioBuilder'))
 const MultiTimeframe = React.lazy(() => import('./pages/MultiTimeframe'))
 const ResearchBrowser = React.lazy(() => import('./pages/ResearchBrowser'))
 const VolatilityClustering = React.lazy(() => import('./pages/VolatilityClustering'))
+const SignalAlerts = React.lazy(() => import('./pages/SignalAlerts'))
 
 const { Header, Sider, Content } = Layout
 
@@ -119,6 +121,7 @@ const ROUTE_MAP = {
   '/portfolio': 'portfolio',
   '/multi-timeframe': 'multi-timeframe',
   '/volatility': 'volatility',
+  '/alerts': 'alerts',
 }
 
 const menuItems = [
@@ -148,6 +151,7 @@ const menuItems = [
   { key: 'portfolio', icon: <PieChartOutlined />, label: '组合构建' },
   { key: 'multi-timeframe', icon: <RiseOutlined />, label: '📐 多周期共振' },
   { key: 'volatility', icon: <BarChartOutlined />, label: '📊 波动率分区' },
+  { key: 'alerts', icon: <AlertOutlined />, label: '🚨 信号告警' },
 ]
 
 /**
@@ -357,6 +361,13 @@ function AppLayout() {
         return (
           <VolatilityClustering
             key={`volatility-${refreshKey}`}
+            tradeDate={tradeDate}
+          />
+        )
+      case 'alerts':
+        return (
+          <SignalAlerts
+            key={`alerts-${refreshKey}`}
             tradeDate={tradeDate}
           />
         )
