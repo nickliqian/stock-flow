@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/research-browser", tags=["research-browser"])
 RESEARCH_ROOT = Path(os.path.expanduser("~/projects/stock-research")).resolve()
 
 # 只允许浏览这些子目录
-ALLOWED_SUBDIRS = {"raw", "insights", "library", "archive", "logs"}
+ALLOWED_SUBDIRS = {"raw", "insights", "library", "archive", "output", "logs"}
 
 # 目录树最大递归深度
 MAX_DEPTH = 3
@@ -41,7 +41,7 @@ def _safe_path(relative: str) -> Path:
     target = (RESEARCH_ROOT / relative).resolve()
 
     # 校验路径是否在根目录内
-    if not str(target).startswith(str(RESEARCH_ROOT)):
+    if not target.is_relative_to(RESEARCH_ROOT):
         raise HTTPException(status_code=403, detail="路径越界，禁止访问")
 
     if not target.exists():

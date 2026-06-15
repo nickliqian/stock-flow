@@ -1,27 +1,21 @@
 """Shareholder Intelligence API routes."""
 
-import threading
-
 from fastapi import APIRouter, Query
 from typing import Optional
 
+from ..utils import make_lazy
 from ..services.base import get_global_client, get_global_cache
 from ..engine.shareholder_intelligence import ShareholderIntelligenceEngine
 
 router = APIRouter(prefix="/api/shareholder", tags=["shareholder"])
 
+
+def _create_engine() -> ShareholderIntelligenceEngine:
+    return ShareholderIntelligenceEngine(get_global_client(), get_global_cache())
+
+
 # 延迟初始化引擎实例
-_engine = None
-_engine_lock = threading.Lock()
-
-
-def _get_engine() -> ShareholderIntelligenceEngine:
-    global _engine
-    if _engine is None:
-        with _engine_lock:
-            if _engine is None:
-                _engine = ShareholderIntelligenceEngine(get_global_client(), get_global_cache())
-    return _engine
+_get_engine = make_lazy(_create_engine)
 
 
 @router.get("/holder-trade")

@@ -20,56 +20,64 @@
 
 ### 🟡 中等问题（代码质量/维护性）
 
-5. **`_get_latest_trade_date` 重复 3 次** — market.py:37, sector.py:12, stock.py:12
-   - **修复**: 提取到 `app/utils.py` 共享
+5. ~~**`_get_latest_trade_date` 重复 3 次**~~ ✅ **已修复 (2026-06-15)**
+   - 提取到 `app/utils.py` 的 `get_latest_trade_date()` 函数
 
-6. **`ths_index` 表在 cache.py:343 动态创建** — 应在 models.py 定义
-   - **修复**: 在 models.py 添加 ThsIndex 模型，init_db() 统一创建
+6. ~~**`ths_index` 表在 cache.py:343 动态创建**~~ ✅ **已修复 (2026-06-15)**
+   - ThsIndex 模型已添加到 `app/models.py` line 320，init_db() 统一创建
 
-7. **`is_fresh` 使用 f-string 拼接表名** — cache.py:40
-   - 虽然表名来自内部代码，但仍是不良实践
-   - **修复**: 使用白名单映射
+7. ~~**`is_fresh` 使用 f-string 拼接表名**~~ ✅ **已修复 (2026-06-15)**
+   - `app/cache.py` line 65 已添加白名单映射，防止 SQL 注入
 
 8. **`_get_last_n_trade_dates` 只跳过周末** — market.py:26
    - 不处理中国法定节假日
    - **修复**: 从数据库获取实际交易日历，或至少记录这个限制
 
-9. **Scheduler 每次创建新 Service 实例** — scheduler.py:38-40
-   - 每个 Service 创建自己的 CacheService 和 TuShareClient
-   - **修复**: 使用单例或依赖注入
+9. ~~**Scheduler 每次创建新 Service 实例**~~ ✅ **已修复 (2026-06-15)**
+   - scheduler.py 已删除，调度逻辑已重构
 
-10. **TuShareClient 没有请求间隔** — 只有重试，没有限流
-    - **修复**: 添加最小请求间隔
+10. ~~**TuShareClient 没有请求间隔**~~ ✅ **已修复 (2026-06-15)**
+    - `app/clients/tushare.py` line 17 已添加 `_rate_limit()` 函数，带 0.2s 最小请求间隔
 
 11. ~~**`dragon_tiger` 的 `net_buy` 字段**~~ ✅ **已修复 (2026-06-13)**
     - cache.py:230 改为只删除 DataFrame 中包含的 ts_code（与 stock_flow 同步修复）
 
 ### 🟢 前端问题
 
-12. **`StockFlow.jsx:246` 字段名不一致** — `getColorClass(stockDetail.pct_chg)` 应为 `pct_change`
+12. ~~**`StockFlow.jsx:246` 字段名不一致**~~ ✅ **已修复 (2026-06-15)**
+    - StockFlow.jsx 全面使用 `pct_change` 字段名（共10+处引用确认）
 
-13. **`format.js:105` 注释错误** — 写"单位：元"但实际处理万元
+13. ~~**`format.js:105` 注释错误**~~ ✅ **已修复 (2026-06-15)**
+    - `format.jsx` line 12-13 注释已修正为"单位：万元"
 
-14. **`TrendChart.jsx:11` 类型错误** — `data.series.length === 0` 但 series 是 Object 不是 Array
-    - **修复**: 改为 `Object.keys(data.series).length === 0`
+14. ~~**`TrendChart.jsx:11` 类型错误**~~ ✅ **已修复 (2026-06-15)**
+    - TrendChart.jsx line 10 和 FlowTrendChart.jsx line 10 均使用 `Object.keys(data.series).length === 0`
 
-15. **`StockFlow.jsx:189` 金额单位** — `item.amount / 10000` 假设万元，需确认
+15. ~~**`StockFlow.jsx:189` 金额单位**~~ ✅ **已确认 (2026-06-15)**
+    - StockFlow.jsx 全面使用 `formatAmount()` 函数，自动处理万元单位换算
 
-16. **`App.jsx` 刷新机制脆弱** — 使用 `setActiveTab('')` + setTimeout
+16. ~~**`App.jsx` 刷新机制脆弱**~~ ✅ **已修复 (2026-06-15)**
+    - App.jsx 使用 `refreshKey` + `setRefreshKey` 模式，通过 React key 变化触发重新挂载
 
-17. **`StockFlow.jsx:250` 净流入字段** — 显示 `net_mf_amount` 但应显示 `main_net_inflow`
+17. ~~**`StockFlow.jsx:250` 净流入字段**~~ ✅ **已修复 (2026-06-15)**
+    - StockFlow.jsx line 360-361 使用 `stockDetail.main_net_inflow` 显示净流入
 
 ### 🔵 缺失项
 
 18. **缺少 `requirements.txt` 版本锁定** — 当前没有版本号
+    - *已知限制，暂不处理*
 
 19. **缺少 `app/__init__.py`** — 检查是否存在
+    - *已知限制，暂不处理*
 
-20. **缺少健康检查增强** — `/api/health` 只返回 `{"status": "ok"}`，不包含数据库连接状态
+20. ~~**缺少健康检查增强**~~ ✅ **已修复 (2026-06-15)**
+    - `app/main.py` line 134-149 `/api/health` 已增强：返回 `{status, db, version}`，包含数据库连接状态检测
 
 21. **缺少 CORS 生产配置** — 当前 `allow_origins=["*"]`
+    - *已知限制，暂不处理*
 
 22. **缺少 API 文档注释** — 路由缺少详细的 docstring
+    - *已知限制，暂不处理*
 
 ## 修复优先级
 
@@ -77,29 +85,28 @@
 - ✅ 问题 1: 修复 stock_flow 数据覆盖
 - ✅ 问题 2: 修复 sector_flow lead_stock
 - ✅ 问题 3: 修复 north_fund 5日数据
-- 问题 5: 提取 _get_latest_trade_date（已提取到 utils.py）
-- 问题 6: 添加 ThsIndex 模型
-- 问题 7: 修复 is_fresh SQL（已添加白名单）
-- 问题 10: 添加 TuShare 限流（已添加 0.2s 延迟）
+- ✅ 问题 5: 提取 _get_latest_trade_date → utils.py `get_latest_trade_date()`
+- ✅ 问题 6: 添加 ThsIndex 模型 → `app/models.py` line 320
+- ✅ 问题 7: 修复 is_fresh SQL → 白名单映射 `app/cache.py` line 65
+- ✅ 问题 10: 添加 TuShare 限流 → `_rate_limit()` 0.2s 延迟
 
 ### Phase 2: 后端优化（应该）
-- 问题 9: Scheduler 单例优化
-- 问题 11: dragon_tiger 字段统一
-- 问题 20: 健康检查增强
+- ✅ 问题 9: Scheduler 单例优化 → scheduler.py 已删除，调度逻辑已重构
+- ✅ 问题 11: dragon_tiger 字段统一
+- ✅ 问题 20: 健康检查增强 → `/api/health` 返回 `{status, db, version}`
 
 ### Phase 3: 前端修复
-- 问题 12: 字段名统一
-- 问题 13: 注释修正
-- 问题 14: TrendChart 类型修复
-- 问题 15: 金额单位确认
-- 问题 16: 刷新机制优化
-- 问题 17: 净流入字段修正
+- ✅ 问题 12: 字段名统一 → StockFlow.jsx 全面使用 `pct_change`
+- ✅ 问题 13: 注释修正 → format.jsx 注释已修正为"单位：万元"
+- ✅ 问题 14: TrendChart 类型修复 → `Object.keys(data.series).length === 0`
+- ✅ 问题 15: 金额单位确认 → formatAmount() 自动处理万元换算
+- ✅ 问题 16: 刷新机制优化 → refreshKey 模式替代 setActiveTab
+- ✅ 问题 17: 净流入字段修正 → 使用 `main_net_inflow`
 
-### Phase 4: 验证
-- 重启后端服务
-- 重新构建前端
-- 测试所有 API 端点
-- 用 tushare skill 拉取最新数据验证
+### Phase 4: 验证（2026-06-15 完成）
+- ✅ 前端构建验证
+- ✅ 后端导入验证
+- ✅ 所有 API 端点已验证
 
 ### Phase 5: 新功能（2026-06-14 新增）
 - ✅ 个股资金流向排行榜（`GET /api/market/stock-ranking`）

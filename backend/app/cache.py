@@ -1178,70 +1178,67 @@ class CacheService:
         """
         # 过滤 ts_code 为 NaN/None 的行，防止写入字符串 "nan" 到数据库
         data = data[data["ts_code"].notna()]
-        session = self.Session()
-        try:
-            if not data.empty and "ts_code" in data.columns:
-                ts_codes = data["ts_code"].unique().tolist()
-                if ts_codes:
-                    placeholders = ", ".join([f":tc{i}" for i in range(len(ts_codes))])
-                    params = {"td": trade_date}
-                    for i, tc in enumerate(ts_codes):
-                        params[f"tc{i}"] = tc
+        with self._session() as session:
+            try:
+                if not data.empty and "ts_code" in data.columns:
+                    ts_codes = data["ts_code"].unique().tolist()
+                    if ts_codes:
+                        placeholders = ", ".join([f":tc{i}" for i in range(len(ts_codes))])
+                        params = {"td": trade_date}
+                        for i, tc in enumerate(ts_codes):
+                            params[f"tc{i}"] = tc
+                        session.execute(
+                            text(f"DELETE FROM daily_basic WHERE trade_date = :td AND ts_code IN ({placeholders})"),
+                            params,
+                        )
+                if data.empty:
+                    session.commit()
+                    return
+                now = datetime.now(timezone.utc)
+                rows = []
+                for _, row in data.iterrows():
+                    rows.append({
+                        "td": trade_date,
+                        "tc": str(row.get("ts_code", "")),
+                        "cl": _safe_float(row, "close") or 0.0,
+                        "tr": _safe_float(row, "turnover_rate") or 0.0,
+                        "trf": _safe_float(row, "turnover_rate_f") or 0.0,
+                        "vr": _safe_float(row, "volume_ratio") or 0.0,
+                        "pe": _safe_float(row, "pe") or 0.0,
+                        "pt": _safe_float(row, "pe_ttm") or 0.0,
+                        "pb": _safe_float(row, "pb") or 0.0,
+                        "ps": _safe_float(row, "ps") or 0.0,
+                        "pst": _safe_float(row, "ps_ttm") or 0.0,
+                        "dr": _safe_float(row, "dv_ratio") or 0.0,
+                        "dt": _safe_float(row, "dv_ttm") or 0.0,
+                        "ts": _safe_float(row, "total_share") or 0.0,
+                        "fs": _safe_float(row, "float_share") or 0.0,
+                        "fre": _safe_float(row, "free_share") or 0.0,
+                        "tmv": _safe_float(row, "total_mv") or 0.0,
+                        "cmv": _safe_float(row, "circ_mv") or 0.0,
+                        "ua": now,
+                    })
+                if rows:
                     session.execute(
-                        text(f"DELETE FROM daily_basic WHERE trade_date = :td AND ts_code IN ({placeholders})"),
-                        params,
+                        text("""
+                            INSERT OR REPLACE INTO daily_basic
+                            (trade_date, ts_code, close, turnover_rate, turnover_rate_f, volume_ratio,
+                             pe, pe_ttm, pb, ps, ps_ttm, dv_ratio, dv_ttm,
+                             total_share, float_share, free_share, total_mv, circ_mv, updated_at)
+                            VALUES (:td, :tc, :cl, :tr, :trf, :vr,
+                                    :pe, :pt, :pb, :ps, :pst, :dr, :dt,
+                                    :ts, :fs, :fre, :tmv, :cmv, :ua)
+                        """),
+                        rows,
                     )
-            if data.empty:
                 session.commit()
-                return
-            now = datetime.now(timezone.utc)
-            rows = []
-            for _, row in data.iterrows():
-                rows.append({
-                    "td": trade_date,
-                    "tc": str(row.get("ts_code", "")),
-                    "cl": _safe_float(row, "close") or 0.0,
-                    "tr": _safe_float(row, "turnover_rate") or 0.0,
-                    "trf": _safe_float(row, "turnover_rate_f") or 0.0,
-                    "vr": _safe_float(row, "volume_ratio") or 0.0,
-                    "pe": _safe_float(row, "pe") or 0.0,
-                    "pt": _safe_float(row, "pe_ttm") or 0.0,
-                    "pb": _safe_float(row, "pb") or 0.0,
-                    "ps": _safe_float(row, "ps") or 0.0,
-                    "pst": _safe_float(row, "ps_ttm") or 0.0,
-                    "dr": _safe_float(row, "dv_ratio") or 0.0,
-                    "dt": _safe_float(row, "dv_ttm") or 0.0,
-                    "ts": _safe_float(row, "total_share") or 0.0,
-                    "fs": _safe_float(row, "float_share") or 0.0,
-                    "fre": _safe_float(row, "free_share") or 0.0,
-                    "tmv": _safe_float(row, "total_mv") or 0.0,
-                    "cmv": _safe_float(row, "circ_mv") or 0.0,
-                    "ua": now,
-                })
-            if rows:
-                session.execute(
-                    text("""
-                        INSERT OR REPLACE INTO daily_basic
-                        (trade_date, ts_code, close, turnover_rate, turnover_rate_f, volume_ratio,
-                         pe, pe_ttm, pb, ps, ps_ttm, dv_ratio, dv_ttm,
-                         total_share, float_share, free_share, total_mv, circ_mv, updated_at)
-                        VALUES (:td, :tc, :cl, :tr, :trf, :vr,
-                                :pe, :pt, :pb, :ps, :pst, :dr, :dt,
-                                :ts, :fs, :fre, :tmv, :cmv, :ua)
-                    """),
-                    rows,
-                )
-            session.commit()
-        except Exception:
-            session.rollback()
-            raise
-        finally:
-            session.close()
+            except Exception:
+                session.rollback()
+                raise
 
     def get_all_daily_basic(self, trade_date: str) -> list:
         """Get all daily_basic records for a trade date, joined with stock_basic for names."""
-        session = self.Session()
-        try:
+        with self._session() as session:
             results = session.execute(
                 text("""
                     SELECT db.trade_date, db.ts_code, db.close, db.turnover_rate,
@@ -1257,20 +1254,15 @@ class CacheService:
                 {"td": trade_date},
             ).fetchall()
             return [dict(r._mapping) for r in results]
-        finally:
-            session.close()
 
     def get_all_daily_basic_count(self, trade_date: str) -> int:
         """Count daily_basic records for a trade date."""
-        session = self.Session()
-        try:
+        with self._session() as session:
             result = session.execute(
                 text("SELECT COUNT(*) FROM daily_basic WHERE trade_date = :td"),
                 {"td": trade_date},
             ).scalar()
             return result or 0
-        finally:
-            session.close()
 
     def get_filtered_daily_basic(self, trade_date: str, filters: dict = None) -> list:
         """Get daily_basic records with SQL-level numeric filtering.

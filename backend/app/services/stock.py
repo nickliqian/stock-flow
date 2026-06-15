@@ -120,9 +120,8 @@ class StockService(BaseService):
         candidate_dates = sorted(set(candidate_dates))
 
         # Query DB for existing data (single range query)
-        session = self.cache.Session()
-        existing = {}
-        try:
+        with self.cache._session() as session:
+            existing = {}
             results = session.execute(
                 text("SELECT * FROM stock_flow WHERE trade_date BETWEEN :start AND :end AND ts_code = :tc"),
                 {"start": candidate_dates[0], "end": candidate_dates[-1], "tc": ts_code},
@@ -160,8 +159,6 @@ class StockService(BaseService):
                                 existing[d] = dict(result._mapping)
                 except Exception as e:
                     logger.error(f"Error fetching stock flow for {ts_code} ({missing_start}~{missing_end}): {e}")
-        finally:
-            session.close()
 
         # Build trend data from available records (sorted by date)
         dates_sorted = sorted(existing.keys())
