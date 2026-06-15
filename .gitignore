@@ -9,3 +9,9 @@ __pycache__/
 .vscode/
 *.log
 .cache/
+
+# Secrets and setup scripts
+.screenshots/
+scripts/setup-github.py
+*.db-shm
+*.db-wal
