@@ -1,6 +1,7 @@
 """通用工具函数。"""
 
 import logging
+import threading
 import pandas as pd
 from datetime import datetime, timedelta
 from sqlalchemy import text
@@ -12,19 +13,21 @@ T = TypeVar("T")
 
 
 def make_lazy(factory: Callable[[], T]) -> Callable[[], T]:
-    """修复：提取共享的延迟初始化工厂函数。
+    """提取共享的延迟初始化工厂函数（DCL 线程安全版本）。
 
     返回一个 getter 函数，首次调用时执行 factory() 创建单例并缓存，
     后续调用直接返回缓存实例。避免在模块导入时创建重量级对象。
 
-    此前 strategy.py 和 alpha.py 各自定义了完全相同的 _make_lazy，
-    违反 DRY 原则，现统一提取到 utils.py 共享模块。
+    使用 Double-Checked Locking 模式确保多线程并发首次调用时只创建一个实例。
     """
     _cache = [None]
+    _lock = threading.Lock()
 
     def getter() -> T:
         if _cache[0] is None:
-            _cache[0] = factory()
+            with _lock:
+                if _cache[0] is None:
+                    _cache[0] = factory()
         return _cache[0]
 
     return getter

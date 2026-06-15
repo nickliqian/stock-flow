@@ -8,7 +8,7 @@ if _secrets_path.exists():
     load_dotenv(_secrets_path)
 
 TUSHARE_TOKEN: str = os.getenv("TUSHARE_TOKEN", "")
-TUSHARE_API_URL: str = os.getenv("TUSHARE_API_URL", "http://124.222.60.121:8020/")
+TUSHARE_API_URL: str = os.getenv("TUSHARE_API_URL", "")
 
 DB_PATH: str = os.getenv("DB_PATH", str(Path(__file__).parent.parent / "data" / "cache.db"))
 CACHE_DB_URL: str = f"sqlite:///{DB_PATH}"

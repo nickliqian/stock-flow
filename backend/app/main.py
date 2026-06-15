@@ -79,7 +79,9 @@ app.add_middleware(
 
 @app.middleware("http")
 async def request_logging_middleware(request: Request, call_next):
-    """记录每个请求的方法、路径、耗时、状态码。"""
+    """记录每个请求的方法、路径、耗时、状态码。排除健康检查端点避免日志洪泛。"""
+    if request.url.path == "/api/health":
+        return await call_next(request)
     start_time = time.time()
     response = await call_next(request)
     elapsed_ms = (time.time() - start_time) * 1000

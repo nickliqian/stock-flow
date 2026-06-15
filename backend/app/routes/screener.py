@@ -40,7 +40,7 @@ def screen_stocks(
     sort_by: str = Query("total_mv", description="排序字段"),
     sort_order: str = Query("desc", description="排序方向: asc/desc"),
     page: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(50, ge=1, description="每页条数"),
+    page_size: int = Query(50, ge=1, le=200, description="每页条数"),
 ):
     """多维度选股筛选器 — 按 PE/PB/市值/换手率/量比/股息率/资金流入等条件筛选股票"""
     # 修复：校验 sort_by 是否在白名单内，防止非法字段导致 SQL 注入
