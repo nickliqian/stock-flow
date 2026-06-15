@@ -351,6 +351,12 @@ function AppLayout() {
             key={`pairtrading-${refreshKey}`}
           />
         )
+      case 'portfolio':
+        return (
+          <PortfolioBuilder
+            key={`portfolio-${refreshKey}`}
+          />
+        )
       case 'multi-timeframe':
         return (
           <MultiTimeframe

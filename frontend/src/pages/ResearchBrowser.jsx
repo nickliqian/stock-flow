@@ -1,14 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Card, Tree, Spin, Typography, Breadcrumb, Empty, Space, Tag } from 'antd'
+import {
+  Card, Tree, Spin, Typography, Breadcrumb, Empty, Space, Tag,
+  Button, Drawer, Form, Input, Select, message,
+} from 'antd'
 import {
   FolderOutlined,
   FileTextOutlined,
   FileOutlined,
   BookOutlined,
   HomeOutlined,
+  PlusOutlined,
 } from '@ant-design/icons'
 
 const { Text } = Typography
+const { TextArea } = Input
+
+/** 分类选项 */
+const CATEGORY_OPTIONS = [
+  { value: 'auto', label: '自动识别' },
+  { value: 'market-strategy', label: '选股策略' },
+  { value: 'quantitative', label: '量化炒股' },
+  { value: 'analysis', label: '股票分析' },
+  { value: 'macro-micro', label: '宏观微观' },
+  { value: 'institutional', label: '主力机构' },
+  { value: 'ai-sector', label: 'AI赛道' },
+  { value: 'new-energy', label: '新能源' },
+  { value: 'pcb', label: 'PCB产业链' },
+  { value: 'semiconductor', label: '半导体' },
+  { value: 'etf-index', label: 'ETF与指数' },
+  { value: 'convertible-bond', label: '可转债' },
+  { value: 'hk-us-stock', label: '港股/美股' },
+  { value: 'futures-options', label: '期货期权' },
+  { value: 'fixed-income', label: '债券固收' },
+]
 
 /** 后端 API 基础路径 */
 const API_BASE = '/api/research-browser'
@@ -111,26 +135,66 @@ export default function ResearchBrowser() {
   const [fileContent, setFileContent] = useState(null)
   const [fileLoading, setFileLoading] = useState(false)
 
+  // 录入抽屉
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [form] = Form.useForm()
+
   /** 加载目录树 */
+  const loadTree = useCallback(async (signal) => {
+    setTreeLoading(true)
+    try {
+      const resp = await fetch(`${API_BASE}/tree`, { signal })
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+      const data = await resp.json()
+      setTreeData(data)
+    } catch (err) {
+      if (err.name === 'AbortError') return
+      console.error('加载目录树失败:', err)
+    } finally {
+      setTreeLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     const controller = new AbortController()
-    const fetchTree = async () => {
-      setTreeLoading(true)
-      try {
-        const resp = await fetch(`${API_BASE}/tree`, { signal: controller.signal })
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-        const data = await resp.json()
-        setTreeData(data)
-      } catch (err) {
-        if (err.name === 'AbortError') return
-        console.error('加载目录树失败:', err)
-      } finally {
-        setTreeLoading(false)
-      }
-    }
-    fetchTree()
+    loadTree(controller.signal)
     return () => controller.abort()
-  }, [])
+  }, [loadTree])
+
+  /** 提交录入 */
+  const handleCreate = useCallback(async (closeDrawer) => {
+    try {
+      const values = await form.validateFields()
+      setSubmitting(true)
+      const resp = await fetch(`${API_BASE}/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: values.title || '',
+          content: values.content,
+          category: values.category || 'auto',
+        }),
+      })
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}))
+        throw new Error(err.detail || `HTTP ${resp.status}`)
+      }
+      const result = await resp.json()
+      message.success(`录入成功：${result.file_path}`)
+      form.resetFields()
+      if (closeDrawer) {
+        setDrawerOpen(false)
+      }
+      // 刷新目录树
+      loadTree()
+    } catch (err) {
+      if (err.errorFields) return // 表单校验错误
+      message.error(`录入失败: ${err.message}`)
+    } finally {
+      setSubmitting(false)
+    }
+  }, [form, loadTree])
 
   /** 点击文件 → 加载内容 */
   const handleFileSelect = useCallback(async (selectedKeys) => {
@@ -171,7 +235,16 @@ export default function ResearchBrowser() {
           <BookOutlined style={{ fontSize: 18 }} />
           <Text strong style={{ fontSize: 16 }}>研究资料</Text>
         </Space>
-        <Breadcrumb items={breadcrumbItems} />
+        <Space>
+          <Breadcrumb items={breadcrumbItems} />
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setDrawerOpen(true)}
+          >
+            录入资料
+          </Button>
+        </Space>
       </div>
 
       {/* 主体：左右分栏 */}
@@ -258,6 +331,49 @@ export default function ResearchBrowser() {
           </Spin>
         </Card>
       </div>
+
+      {/* 录入资料抽屉 */}
+      <Drawer
+        title="录入研究资料"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        width={600}
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button onClick={() => setDrawerOpen(false)}>取消</Button>
+            <Button
+              type="primary"
+              loading={submitting}
+              onClick={() => handleCreate(false)}
+            >
+              录入并继续
+            </Button>
+            <Button
+              type="primary"
+              loading={submitting}
+              onClick={() => handleCreate(true)}
+            >
+              录入并关闭
+            </Button>
+          </div>
+        }
+      >
+        <Form form={form} layout="vertical" initialValues={{ category: 'auto' }}>
+          <Form.Item name="title" label="标题">
+            <Input placeholder="留空将自动生成" />
+          </Form.Item>
+          <Form.Item name="category" label="分类">
+            <Select options={CATEGORY_OPTIONS} />
+          </Form.Item>
+          <Form.Item
+            name="content"
+            label="内容"
+            rules={[{ required: true, message: '请输入资料内容' }]}
+          >
+            <TextArea rows={10} placeholder="粘贴资料内容..." />
+          </Form.Item>
+        </Form>
+      </Drawer>
     </div>
   )
 }

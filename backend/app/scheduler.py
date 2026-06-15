@@ -159,11 +159,13 @@ class DataScheduler:
             for ts_code in ["000001.SH", "399001.SZ", "399006.SZ", "000688.SH"]:
                 logger.info(f"Pre-caching index daily for {ts_code}...")
                 try:
-                    self.market_service.client.get_index_daily(
+                    df = self.market_service.client.get_index_daily(
                         ts_code=ts_code,
                         start_date=(datetime.now() - timedelta(days=120)).strftime("%Y%m%d"),
                         end_date=trade_date,
                     )
+                    if df is not None and not df.empty:
+                        self.market_service.cache.upsert_index_daily(df, ts_code)
                 except Exception as e:
                     logger.warning(f"Failed to cache index daily for {ts_code}: {e}")
 

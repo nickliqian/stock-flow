@@ -72,8 +72,8 @@ def get_signals(
 
 @router.get("/backtest")
 def backtest_pair(
-    code1: str = Query(..., description="股票1代码"),
-    code2: str = Query(..., description="股票2代码"),
+    code1: str = Query(..., pattern=r"^\d{6}\.(SH|SZ)$", description="股票1代码，如 000001.SZ"),
+    code2: str = Query(..., pattern=r"^\d{6}\.(SH|SZ)$", description="股票2代码，如 600519.SH"),
     start_date: Optional[str] = Query(None, description="起始日期"),
     end_date: Optional[str] = Query(None, description="结束日期"),
     hold_days: int = Query(5, ge=1, le=20, description="最大持有天数"),
@@ -96,8 +96,8 @@ def backtest_pair(
 
 @router.get("/pair")
 def get_pair_detail(
-    code1: str = Query(..., description="股票1代码"),
-    code2: str = Query(..., description="股票2代码"),
+    code1: str = Query(..., pattern=r"^\d{6}\.(SH|SZ)$", description="股票1代码，如 000001.SZ"),
+    code2: str = Query(..., pattern=r"^\d{6}\.(SH|SZ)$", description="股票2代码，如 600519.SH"),
     lookback_days: int = Query(90, ge=30, le=200, description="回看天数"),
 ):
     """获取配对详情（价差走势、z-score、协整检验结果）"""

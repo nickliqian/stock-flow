@@ -136,8 +136,8 @@ class WatchlistService(BaseService):
                 }
             except Exception as exc:
                 session.rollback()
-                logger.error("Failed to add to watchlist: %s", exc)
-                return {"success": False, "error": str(exc)}
+                logger.error("Failed to add to watchlist: %s", exc, exc_info=True)
+                return {"success": False, "error": "添加自选股失败，请稍后重试"}
 
     def remove_from_watchlist(self, ts_code: str) -> Dict[str, Any]:
         """删除自选股。"""
@@ -152,8 +152,8 @@ class WatchlistService(BaseService):
                 return {"success": True, "data": {"ts_code": ts_code}}
             except Exception as exc:
                 session.rollback()
-                logger.error("Failed to remove from watchlist: %s", exc)
-                return {"success": False, "error": str(exc)}
+                logger.error("Failed to remove from watchlist: %s", exc, exc_info=True)
+                return {"success": False, "error": "删除自选股失败，请稍后重试"}
 
     def update_watchlist(
         self, ts_code: str, group_name: Optional[str] = None, notes: Optional[str] = None
@@ -180,8 +180,8 @@ class WatchlistService(BaseService):
                 }
             except Exception as exc:
                 session.rollback()
-                logger.error("Failed to update watchlist: %s", exc)
-                return {"success": False, "error": str(exc)}
+                logger.error("Failed to update watchlist: %s", exc, exc_info=True)
+                return {"success": False, "error": "更新自选股失败，请稍后重试"}
 
     def get_stock_signals(self, ts_code: str) -> Dict[str, Any]:
         """获取单只股票的当日所有策略信号。"""

@@ -2,7 +2,7 @@
 
 import threading
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Path, Query
 from typing import Optional
 
 from ..services.base import get_global_client, get_global_cache
@@ -34,7 +34,9 @@ def get_conviction(
 
 
 @router.get("/conviction/{ts_code}")
-def get_conviction_detail(ts_code: str):
+def get_conviction_detail(
+    ts_code: str = Path(..., pattern=r"^\d{6}\.(SH|SZ)$", description="股票代码，如 000001.SZ"),
+):
     """单只股票的详细置信度分析"""
     engine = _get_engine()
     return engine.get_stock_conviction(ts_code=ts_code)
@@ -42,7 +44,7 @@ def get_conviction_detail(ts_code: str):
 
 @router.get("/trades/{ts_code}")
 def get_trades(
-    ts_code: str,
+    ts_code: str = Path(..., pattern=r"^\d{6}\.(SH|SZ)$", description="股票代码，如 000001.SZ"),
     days: int = Query(30, description="回溯天数"),
 ):
     """获取指定股票的内部人交易明细"""
@@ -51,7 +53,9 @@ def get_trades(
 
 
 @router.get("/shareholder-trend/{ts_code}")
-def get_shareholder_trend(ts_code: str):
+def get_shareholder_trend(
+    ts_code: str = Path(..., pattern=r"^\d{6}\.(SH|SZ)$", description="股票代码，如 000001.SZ"),
+):
     """获取股东人数变动趋势 + 前十大股东变动"""
     engine = _get_engine()
     return engine.get_shareholder_trend(ts_code=ts_code)

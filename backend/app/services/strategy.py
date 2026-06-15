@@ -133,8 +133,8 @@ class StrategyService(BaseService):
                     "results": [r.to_dict() for r in sr[:30]],
                 }
             except Exception as exc:
-                logger.error("Strategy '%s' execution failed: %s", name, exc)
-                results[name] = {"error": str(exc)}
+                logger.error("Strategy '%s' execution failed: %s", name, exc, exc_info=True)
+                results[name] = {"error": "策略执行失败，请稍后重试"}
 
         return {
             "success": True,

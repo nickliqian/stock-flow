@@ -455,7 +455,7 @@ class CacheService:
                         })
                     session.execute(
                         text("""
-                            INSERT INTO sector_flow
+                            INSERT OR REPLACE INTO sector_flow
                             (trade_date, sector_code, sector_name, net_inflow,
                              large_net, large_pct, lead_stock, lead_stock_name, lead_chg, updated_at)
                             VALUES (:td, :sc, :sn, :ni,
