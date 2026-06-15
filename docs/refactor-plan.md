@@ -753,3 +753,47 @@
 - **创新点**: 市面上没有个人股票工具做「22策略并行扫描→多策略共振告警→实时信号推送」，将机构量化的多策略信号聚合方法论平民化
 - **创新点**: 市面上没有个人股票工具做「波动率 regime 聚类 + 风险分区」，将机构量化的波动率管理方法论平民化
 - **验证**: 后端启动成功、3 个 API 端点全部返回正确数据、前端构建成功(14.2KB chunk)
+
+### Phase 31: 遗漏功能补全 (2026-06-15 自进化发现)
+> 以下 9 个功能此前已实现代码但未记录在重构计划中，本轮补全文档并修复前端路由缺陷。
+
+- ✅ **🔧 Bug Fix: PortfolioBuilder 前端路由缺失** — App.jsx switch 缺少 `case 'portfolio'` 导致点击「组合构建」菜单无法渲染页面
+- ✅ **🔄 配对交易 (PairTrading)** — 🆕 统计套利配对发现与交易信号
+  - 引擎：`pair_trading.py` (758行) — 协整检验、价差分析、配对发现
+  - API：`/api/pair-trading/{discover,pair,signals,backtest}`
+  - 前端：`PairTrading.jsx` (645行)
+- ✅ **📐 多周期共振 (MultiTimeframe)** — 🆕 日/周/月多时间框架信号共振
+  - 引擎：`multi_timeframe.py` (382行) — 跨周期 MACD/RSI/趋势信号
+  - API：`/api/multi-timeframe/{analyze,stock/{ts_code}}`
+  - 前端：`MultiTimeframe.jsx` (609行)
+- ✅ **📊 因子轮动 (FactorModel)** — 🆕 多因子暴露分析与因子轮动信号
+  - 引擎：`factor_model.py` (635行) — 因子暴露、动量、绩效、体制检测
+  - API：`/api/strategies/factor-model/{rotation,momentum,performance,exposure/{ts_code},regime,record}`
+  - 前端：`FactorModel.jsx` (477行)
+- ✅ **🧩 组合构建 (PortfolioBuilder)** — 🆕 策略组合优化与归因分析
+  - 引擎：`portfolio_constructor.py` (497行) — 候选池、优化、对比、归因
+  - API：`/api/portfolio/{optimize,candidates,compare,attribution}`
+  - 前端：`PortfolioBuilder.jsx` (515行)
+- ✅ **⚖️ 自适应权重 (AdaptiveWeight)** — 🆕 基于市场体制的策略权重自动调整
+  - 引擎：`adaptive_weight.py` (752行) — 权重优化、历史追踪、体制适配
+  - API：`/api/strategies/adaptive/{execute,weights,history,summary}`
+  - 前端：`AdaptiveWeight.jsx` (630行)
+- ✅ **🏛️ 机构雷达 (InstitutionalRadar)** — 🆕 机构资金流向与拥挤度检测
+  - 引擎：`institutional_radar.py` (324行) — 机构资金流、拥挤度、置信度
+  - API：`/api/strategies/institutional/{flow,crowding,conviction/{ts_code}}`
+  - 前端：`InstitutionalRadar.jsx` (199行)
+- ✅ **💎 筹码分析 (ChipIntelligence)** — 🆕 筹码分布与集中度分析
+  - 引擎：`chip_intelligence.py` (270行) — 筹码穿透率、集中度、成本分析
+  - API：`/api/strategies/chip-analysis`
+  - 前端：`ChipIntelligence.jsx` (473行)
+- ✅ **👥 股东情报 (ShareholderIntelligence)** — 🆕 股东人数变化与持股变动分析
+  - 引擎：`shareholder_intelligence.py` (467行) — 股东人数趋势、十大股东变动
+  - API：`/api/shareholder/{comprehensive,holder-num,holder-trade,top-holders}`
+  - 前端：`ShareholderIntelligence.jsx` (699行)
+- ✅ **📚 研究资料浏览器 (ResearchBrowser)** — 🆕 本地研究资料文件浏览与管理
+  - 路由：`research_browser.py` (277行) — 文件树、文件内容、文件创建
+  - API：`/api/research-browser/{tree,file,create}`
+  - 前端：`ResearchBrowser.jsx` (394行)
+- **总计**: 9 个功能模块（引擎 4085行 + 前端 4641行 + 路由 617行 = 9343行代码）
+- **验证**: 后端导入成功(32个引擎模块全部通过)、前端构建成功、所有 API 端点返回正确数据
+- **创新点**: 补全策略分析平台的完整能力矩阵——从配对套利到因子轮动，从筹码分析到股东情报，覆盖量化投资全链路
