@@ -125,34 +125,114 @@ const ROUTE_MAP = {
 }
 
 const menuItems = [
-  { key: 'overview', icon: <BarChartOutlined />, label: '大盘总览' },
-  { key: 'sector', icon: <FundOutlined />, label: '板块资金' },
-  { key: 'stock', icon: <StockOutlined />, label: '个股资金' },
-  { key: 'screener', icon: <SearchOutlined />, label: '选股工具' },
-  { key: 'strategy', icon: <RocketOutlined />, label: '策略中心' },
-  { key: 'smart', icon: <BulbOutlined />, label: '智能分析' },
-  { key: 'breadth', icon: <AppstoreOutlined />, label: '市场宽度' },
-  { key: 'chip', icon: <CrownOutlined />, label: '筹码分析' },
-  { key: 'evolution', icon: <ExperimentOutlined />, label: '策略进化' },
-  { key: 'adaptive', icon: <ExperimentOutlined />, label: '自适应权重' },
-  { key: 'factormodel', icon: <BarChartOutlined />, label: '因子轮动' },
-  { key: 'watchlist', icon: <StarOutlined />, label: '自选股' },
-  { key: 'activity', icon: <RobotOutlined />, label: 'AI日志' },
-  { key: 'research', icon: <BookOutlined />, label: '研究资料' },
-  { key: 'radar', icon: <BankOutlined />, label: '机构雷达' },
-  { key: 'shareholder', icon: <BankOutlined />, label: '股东情报' },
-  { key: 'events', icon: <CalendarOutlined />, label: '事件日历' },
-  { key: 'crowding', icon: <WarningOutlined />, label: '拥挤度' },
-  { key: 'effectiveness', icon: <ExperimentOutlined />, label: '信号有效性' },
-  { key: 'insider', icon: <BankOutlined />, label: '内部人信号' },
-  { key: 'alpha', icon: <ExperimentOutlined />, label: 'Alpha评分' },
-  { key: 'recommendation', icon: <BulbOutlined />, label: '智能荐股' },
-  { key: 'pairtrading', icon: <SwapOutlined />, label: '配对交易' },
-  { key: 'portfolio', icon: <PieChartOutlined />, label: '组合构建' },
-  { key: 'multi-timeframe', icon: <RiseOutlined />, label: '📐 多周期共振' },
-  { key: 'volatility', icon: <BarChartOutlined />, label: '📊 波动率分区' },
-  { key: 'alerts', icon: <AlertOutlined />, label: '🚨 信号告警' },
+  {
+    key: 'market',
+    icon: <BarChartOutlined />,
+    label: '市场概览',
+    children: [
+      { key: 'overview', label: '大盘总览' },
+      { key: 'sector', label: '板块资金' },
+      { key: 'stock', label: '个股资金' },
+      { key: 'breadth', label: '市场宽度' },
+    ],
+  },
+  {
+    key: 'pick',
+    icon: <SearchOutlined />,
+    label: '选股工具',
+    children: [
+      { key: 'screener', label: '多维选股' },
+      { key: 'recommendation', label: '智能荐股' },
+      { key: 'watchlist', label: '自选股' },
+    ],
+  },
+  {
+    key: 'strat',
+    icon: <RocketOutlined />,
+    label: '策略中心',
+    children: [
+      { key: 'strategy', label: '策略总览' },
+      { key: 'evolution', label: '策略进化' },
+      { key: 'adaptive', label: '自适应权重' },
+      { key: 'factormodel', label: '因子轮动' },
+      { key: 'effectiveness', label: '信号有效性' },
+      { key: 'crowding', label: '拥挤度' },
+    ],
+  },
+  {
+    key: 'analysis',
+    icon: <BulbOutlined />,
+    label: '智能分析',
+    children: [
+      { key: 'smart', label: '智能分析' },
+      { key: 'chip', label: '筹码分析' },
+      { key: 'radar', label: '机构雷达' },
+      { key: 'shareholder', label: '股东情报' },
+      { key: 'insider', label: '内部人信号' },
+      { key: 'alpha', label: 'Alpha评分' },
+    ],
+  },
+  {
+    key: 'tools',
+    icon: <ExperimentOutlined />,
+    label: '高级工具',
+    children: [
+      { key: 'pairtrading', label: '配对交易' },
+      { key: 'portfolio', label: '组合构建' },
+      { key: 'multi-timeframe', label: '多周期共振' },
+      { key: 'volatility', label: '波动率分区' },
+      { key: 'alerts', label: '信号告警' },
+    ],
+  },
+  {
+    key: 'research-group',
+    icon: <BookOutlined />,
+    label: '研究资料',
+    children: [
+      { key: 'research', label: '资料浏览' },
+      { key: 'events', label: '事件日历' },
+    ],
+  },
+  {
+    key: 'system',
+    icon: <RobotOutlined />,
+    label: '系统',
+    children: [
+      { key: 'activity', label: 'AI日志' },
+    ],
+  },
 ]
+
+// 页面信息映射 — 动态显示页面标题和描述
+const PAGE_INFO = {
+  overview: { title: '大盘总览', desc: '上证/深成/创业板资金流向与涨跌统计' },
+  sector: { title: '板块资金', desc: '行业板块资金流向排行与成分股' },
+  stock: { title: '个股资金', desc: '个股主力资金流向与趋势分析' },
+  breadth: { title: '市场宽度', desc: '涨跌分布、市场温度与宽度趋势' },
+  screener: { title: '多维选股', desc: '技术面+基本面多维度筛选' },
+  recommendation: { title: '智能荐股', desc: '7维度综合评分BUY/HOLD/AVOID' },
+  watchlist: { title: '自选股', desc: '关注股票的资金流向追踪' },
+  strategy: { title: '策略总览', desc: '23个量化策略引擎信号矩阵' },
+  evolution: { title: '策略进化', desc: '策略衰减检测与参数优化' },
+  adaptive: { title: '自适应权重', desc: '动态策略权重计算' },
+  factormodel: { title: '因子轮动', desc: '价值/动量/资金/事件因子追踪' },
+  effectiveness: { title: '信号有效性', desc: '策略信号质量与信任度评估' },
+  crowding: { title: '拥挤度', desc: '策略拥挤度演进与风险预警' },
+  smart: { title: '智能分析', desc: 'AI驱动的综合市场分析' },
+  chip: { title: '筹码分析', desc: '筹码分布与成本分析' },
+  radar: { title: '机构雷达', desc: '龙虎榜机构席位动向' },
+  shareholder: { title: '股东情报', desc: '股东人数变动与持仓分析' },
+  insider: { title: '内部人信号', desc: '高管增持/减持与置信度评分' },
+  alpha: { title: 'Alpha评分', desc: '行业相对Alpha评分与热力图' },
+  pairtrading: { title: '配对交易', desc: '协整配对发现与价差信号' },
+  portfolio: { title: '组合构建', desc: '等权/风险平价/因子加权组合' },
+  'multi-timeframe': { title: '多周期共振', desc: '日/周/月多周期动量共振' },
+  volatility: { title: '波动率分区', desc: '全市场波动率聚类与风险分区' },
+  alerts: { title: '信号告警', desc: '实时策略信号与异常检测' },
+  research: { title: '研究资料', desc: '搜集资料浏览与手动录入' },
+  events: { title: '事件日历', desc: '财报披露/限售解禁/回购信号' },
+  activity: { title: 'AI日志', desc: '系统执行记录与状态监控' },
+}
 
 /**
  * 应用主组件
@@ -417,29 +497,40 @@ function AppLayout() {
           {/* Logo 区域 */}
           <div
             style={{
-              height: 48,
+              height: 56,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              borderBottom: '1px solid #f0f0f0',
+              background: 'linear-gradient(135deg, #001529 0%, #1a1a2e 100%)',
               overflow: 'hidden',
               whiteSpace: 'nowrap',
               cursor: 'pointer',
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
             }}
             onClick={() => navigate('/overview')}
           >
             {collapsed ? (
-              <span style={{ fontSize: 20 }}>💹</span>
+              <span style={{ fontSize: 24, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>💹</span>
             ) : (
-              <span style={{ color: '#333', fontSize: 14, fontWeight: 600, letterSpacing: 0.5 }}>
-                💹 资金流向系统
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 26, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>💹</span>
+                <span style={{
+                  color: '#fff',
+                  fontSize: 15,
+                  fontWeight: 600,
+                  letterSpacing: 1,
+                  textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                }}>
+                  资金流向系统
+                </span>
+              </div>
             )}
           </div>
           <Menu
             theme="light"
             mode="inline"
             selectedKeys={[activeTab]}
+            defaultOpenKeys={['market', 'pick', 'strat', 'analysis', 'tools', 'research-group', 'system']}
             items={menuItems}
             onClick={handleMenuClick}
             style={{ borderRight: 0, maxHeight: 'calc(100vh - 48px)', overflowY: 'auto' }}
@@ -457,11 +548,23 @@ function AppLayout() {
               alignItems: 'center',
               justifyContent: 'space-between',
               borderBottom: '1px solid rgba(255,255,255,0.1)',
+              height: 56,
+              lineHeight: '56px',
             }}
           >
-            <div style={{ color: '#fff', fontSize: 16, fontWeight: 600, letterSpacing: 0.5 }}>
-              资金流向分析系统
-            </div>
+            {(() => {
+              const pageInfo = PAGE_INFO[activeTab] || PAGE_INFO.overview
+              return (
+                <div>
+                  <div style={{ color: '#fff', fontSize: 16, fontWeight: 600, letterSpacing: 0.5 }}>
+                    {pageInfo.title}
+                  </div>
+                  <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12, marginTop: -4 }}>
+                    {pageInfo.desc}
+                  </div>
+                </div>
+              )
+            })()}
             <Space size={8}>
               <DatePicker
                 locale={zhCN}

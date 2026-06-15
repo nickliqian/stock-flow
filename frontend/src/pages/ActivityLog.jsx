@@ -10,6 +10,8 @@ const TASK_TYPE_MAP = {
   review: { label: '审查', color: 'green', icon: '🔍' },
   sync: { label: '同步', color: 'orange', icon: '🔄' },
   manual: { label: '手动', color: 'purple', icon: '👤' },
+  research: { label: '搜集', color: 'cyan', icon: '📰' },
+  compile: { label: '编译', color: 'magenta', icon: '📚' },
 }
 
 const STATUS_MAP = {
