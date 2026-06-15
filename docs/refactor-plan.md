@@ -29,9 +29,10 @@
 7. ~~**`is_fresh` 使用 f-string 拼接表名**~~ ✅ **已修复 (2026-06-15)**
    - `app/cache.py` line 65 已添加白名单映射，防止 SQL 注入
 
-8. **`_get_last_n_trade_dates` 只跳过周末** — market.py:26
-   - 不处理中国法定节假日
-   - **修复**: 从数据库获取实际交易日历，或至少记录这个限制
+8. ~~**`_get_last_n_trade_dates` 只跳过周末**~~ ✅ **已修复 (2026-06-16)**
+   - `app/utils.py` `get_last_n_trade_dates()` 已调用 `is_holiday(dt)` 跳过法定节假日
+   - `app/services/market.py` `_get_prev_trade_date()` 同样调用 `is_holiday(dt)`
+   - 节假日数据来源：TuShare trade_cal API + 硬编码回退(2024-2026)
 
 9. ~~**Scheduler 每次创建新 Service 实例**~~ ✅ **已修复 (2026-06-15)**
    - scheduler.py 已删除，调度逻辑已重构
@@ -64,17 +65,18 @@
 
 ### 🔵 缺失项
 
-18. **缺少 `requirements.txt` 版本锁定** — 当前没有版本号
-    - *已知限制，暂不处理*
+18. ~~**缺少 `requirements.txt` 版本锁定**~~ ✅ **已修复 (2026-06-16)**
+    - `requirements.txt` 已改为 `==` 精确版本锁定，包含 14 个依赖项
 
-19. **缺少 `app/__init__.py`** — 检查是否存在
-    - *已知限制，暂不处理*
+19. ~~**缺少 `app/__init__.py`**~~ ✅ **已修复 (2026-06-16)**
+    - `app/__init__.py` 已添加模块文档字符串
 
 20. ~~**缺少健康检查增强**~~ ✅ **已修复 (2026-06-15)**
     - `app/main.py` line 134-149 `/api/health` 已增强：返回 `{status, db, version}`，包含数据库连接状态检测
 
-21. **缺少 CORS 生产配置** — 当前 `allow_origins=["*"]`
-    - *已知限制，暂不处理*
+21. ~~**缺少 CORS 生产配置**~~ ✅ **已修复 (2026-06-16)**
+    - `app/main.py` line 69-71 已改为从环境变量 `CORS_ORIGINS` 读取，不再使用 `allow_origins=["*"]`
+    - 默认值：`http://localhost:80,http://localhost:3000,http://localhost:3001`
 
 22. **缺少 API 文档注释** — 路由缺少详细的 docstring
     - *已知限制，暂不处理*
@@ -797,3 +799,15 @@
 - **总计**: 9 个功能模块（引擎 4085行 + 前端 4641行 + 路由 617行 = 9343行代码）
 - **验证**: 后端导入成功(32个引擎模块全部通过)、前端构建成功、所有 API 端点返回正确数据
 - **创新点**: 补全策略分析平台的完整能力矩阵——从配对套利到因子轮动，从筹码分析到股东情报，覆盖量化投资全链路
+
+### Phase 32: 系统健壮性与工程规范化 (2026-06-16 自进化)
+- ✅ **Issue #8 修复验证** — `_get_last_n_trade_dates` 已确认正确处理中国法定节假日
+  - `app/utils.py` 的 `get_last_n_trade_dates()` 已调用 `is_holiday(dt)` 跳过法定节假日
+  - `app/services/market.py` 的 `_get_prev_trade_date()` 同样调用 `is_holiday(dt)`
+  - 节假日数据来源：TuShare trade_cal API + 硬编码回退(2024-2026)
+- ✅ **Issue #21 修复验证** — CORS 已配置为环境变量驱动
+  - `app/main.py` line 69-71 从环境变量 `CORS_ORIGINS` 读取，不再使用 `allow_origins=["*"]`
+- ✅ **Issue #18 修复** — `requirements.txt` 改为 `==` 精确版本锁定
+  - 14 个依赖项全部锁定精确版本号，确保可复现构建
+- ✅ **Issue #19 修复** — `app/__init__.py` 添加模块文档字符串
+- **验证**: 后端导入成功、Python 语法检查通过

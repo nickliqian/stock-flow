@@ -1,8 +1,16 @@
-# [修改] 问题7：为每个依赖添加 >= 最低兼容版本约束
-fastapi>=0.104.0
-uvicorn>=0.24.0
-sqlalchemy>=2.0.0
-tushare>=1.4.0
-pandas>=2.0.0
-apscheduler>=3.10.0
-python-dotenv>=1.0.0
+# stock-flow backend dependencies
+# Pin exact versions for reproducible builds
+fastapi==0.104.1
+uvicorn==0.24.0
+sqlalchemy==2.0.23
+tushare==1.4.29
+pandas==3.0.3
+apscheduler==3.11.2
+python-dotenv==1.2.2
+requests==2.31.0
+pydantic==2.5.2
+pydantic_core==2.14.5
+python-multipart==0.0.6
+httptools==0.8.0
+aiofiles==23.2.1
+Jinja2==3.1.2

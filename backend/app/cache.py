@@ -1,4 +1,5 @@
 import logging
+import threading
 from sqlalchemy import text
 from datetime import datetime, timedelta, timezone
 import pandas as pd
@@ -26,6 +27,7 @@ class CacheService:
         # In-memory cache for get_all_sector_members()
         self._sector_members_cache = None
         self._sector_members_cache_time = None
+        self._sector_members_lock = threading.Lock()
 
     from contextlib import contextmanager
 
@@ -520,22 +522,29 @@ class CacheService:
                             """),
                             rows,
                         )
-                # 删除不在新数据集中的旧记录（分批执行避免超过 SQLITE_MAX_VARIABLE_NUMBER）
+                # 删除不在新数据集中的旧记录
+                # 使用临时表存放全部新 key，再通过子查询一次性删除，
+                # 避免原来逐批 DELETE NOT IN (batch_i) 只保留最后一批的 bug。
                 if new_keys:
                     keys_list = list(new_keys)
-                    for i in range(0, len(keys_list), BATCH_SIZE):
-                        batch = keys_list[i:i + BATCH_SIZE]
-                        pair_parts = []
-                        params = {}
-                        for j, (sc, mc) in enumerate(batch):
-                            pair_parts.append(f"(:sc{j}, :mc{j})")
-                            params[f"sc{j}"] = sc
-                            params[f"mc{j}"] = mc
-                        pairs_str = ", ".join(pair_parts)
+                    session.execute(text("CREATE TEMPORARY TABLE IF NOT EXISTS _new_sector_keys (sector_code TEXT, member_code TEXT)"))
+                    try:
+                        for i in range(0, len(keys_list), BATCH_SIZE):
+                            batch = keys_list[i:i + BATCH_SIZE]
+                            batch_rows = [{"sc": sc, "mc": mc} for sc, mc in batch]
+                            session.execute(
+                                text("INSERT INTO _new_sector_keys (sector_code, member_code) VALUES (:sc, :mc)"),
+                                batch_rows,
+                            )
                         session.execute(
-                            text(f"DELETE FROM sector_member WHERE (sector_code, member_code) NOT IN ({pairs_str})"),
-                            params,
+                            text("""
+                                DELETE FROM sector_member
+                                WHERE (sector_code, member_code) NOT IN
+                                      (SELECT sector_code, member_code FROM _new_sector_keys)
+                            """),
                         )
+                    finally:
+                        session.execute(text("DROP TABLE IF EXISTS _new_sector_keys"))
                 else:
                     # data 为空时不应删除全表，直接提交（无操作）并返回
                     session.commit()
@@ -582,19 +591,29 @@ class CacheService:
                             """),
                             rows,
                         )
-                # 删除不在新数据集中的旧记录（分批执行避免超过 SQLITE_MAX_VARIABLE_NUMBER）
+                # 删除不在新数据集中的旧记录
+                # 使用临时表存放全部新 key，再通过子查询一次性删除，
+                # 避免原来逐批 DELETE NOT IN (batch_i) 只保留最后一批的 bug。
                 if new_codes:
                     codes_list = list(new_codes)
-                    for i in range(0, len(codes_list), BATCH_SIZE):
-                        batch = codes_list[i:i + BATCH_SIZE]
-                        placeholders = ", ".join([f":tc{j}" for j in range(len(batch))])
-                        params = {}
-                        for j, tc in enumerate(batch):
-                            params[f"tc{j}"] = tc
+                    session.execute(text("CREATE TEMPORARY TABLE IF NOT EXISTS _new_stock_codes (ts_code TEXT)"))
+                    try:
+                        for i in range(0, len(codes_list), BATCH_SIZE):
+                            batch = codes_list[i:i + BATCH_SIZE]
+                            batch_rows = [{"tc": tc} for tc in batch]
+                            session.execute(
+                                text("INSERT INTO _new_stock_codes (ts_code) VALUES (:tc)"),
+                                batch_rows,
+                            )
                         session.execute(
-                            text(f"DELETE FROM stock_basic WHERE ts_code NOT IN ({placeholders})"),
-                            params,
+                            text("""
+                                DELETE FROM stock_basic
+                                WHERE ts_code NOT IN
+                                      (SELECT ts_code FROM _new_stock_codes)
+                            """),
                         )
+                    finally:
+                        session.execute(text("DROP TABLE IF EXISTS _new_stock_codes"))
                 else:
                     # data 为空时不应删除全表，直接提交（无操作）并返回
                     session.commit()
@@ -640,19 +659,29 @@ class CacheService:
                             """),
                             rows,
                         )
-                # 删除不在新数据集中的旧记录（分批执行避免超过 SQLITE_MAX_VARIABLE_NUMBER）
+                # 删除不在新数据集中的旧记录
+                # 使用临时表存放全部新 key，再通过子查询一次性删除，
+                # 避免原来逐批 DELETE NOT IN (batch_i) 只保留最后一批的 bug。
                 if new_codes:
                     codes_list = list(new_codes)
-                    for i in range(0, len(codes_list), BATCH_SIZE):
-                        batch = codes_list[i:i + BATCH_SIZE]
-                        placeholders = ", ".join([f":tc{j}" for j in range(len(batch))])
-                        params = {}
-                        for j, tc in enumerate(batch):
-                            params[f"tc{j}"] = tc
+                    session.execute(text("CREATE TEMPORARY TABLE IF NOT EXISTS _new_ths_codes (ts_code TEXT)"))
+                    try:
+                        for i in range(0, len(codes_list), BATCH_SIZE):
+                            batch = codes_list[i:i + BATCH_SIZE]
+                            batch_rows = [{"tc": tc} for tc in batch]
+                            session.execute(
+                                text("INSERT INTO _new_ths_codes (ts_code) VALUES (:tc)"),
+                                batch_rows,
+                            )
                         session.execute(
-                            text(f"DELETE FROM ths_index WHERE ts_code NOT IN ({placeholders})"),
-                            params,
+                            text("""
+                                DELETE FROM ths_index
+                                WHERE ts_code NOT IN
+                                      (SELECT ts_code FROM _new_ths_codes)
+                            """),
                         )
+                    finally:
+                        session.execute(text("DROP TABLE IF EXISTS _new_ths_codes"))
                 else:
                     # data 为空时不应删除全表，直接提交（无操作）并返回
                     session.commit()
@@ -966,15 +995,17 @@ class CacheService:
 
         Uses in-memory cache with SECTOR_MEMBER_CACHE_MINUTES TTL to avoid
         loading the entire sector_member table on every call.
+        Thread-safe via self._sector_members_lock.
         """
-        # Check in-memory cache
-        now = datetime.now(timezone.utc)
-        if (self._sector_members_cache is not None
-                and self._sector_members_cache_time is not None
-                and (now - self._sector_members_cache_time).total_seconds() < SECTOR_MEMBER_CACHE_MINUTES * 60):
-            return self._sector_members_cache
+        # Check in-memory cache (fast path — read under lock)
+        with self._sector_members_lock:
+            now = datetime.now(timezone.utc)
+            if (self._sector_members_cache is not None
+                    and self._sector_members_cache_time is not None
+                    and (now - self._sector_members_cache_time).total_seconds() < SECTOR_MEMBER_CACHE_MINUTES * 60):
+                return self._sector_members_cache
 
-        # Cache miss or expired — query DB
+        # Cache miss or expired — query DB (outside lock to avoid holding it during I/O)
         with self._session() as session:
             try:
                 results = session.execute(
@@ -990,13 +1021,15 @@ class CacheService:
                             "members": [],
                         }
                     mapping[code]["members"].append(row["member_code"])
-                # Update in-memory cache
-                self._sector_members_cache = mapping
-                self._sector_members_cache_time = now
+                # Update in-memory cache under lock
+                with self._sector_members_lock:
+                    self._sector_members_cache = mapping
+                    self._sector_members_cache_time = now
                 return mapping
             except Exception:
                 logger.debug("get_all_sector_members query failed: %s", exc_info=True)
-                return self._sector_members_cache or {}
+                with self._sector_members_lock:
+                    return self._sector_members_cache or {}
 
     def get_all_ths_index(self) -> list:
         """Get all ths_index records."""

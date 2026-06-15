@@ -2,6 +2,7 @@
 """策略服务层——协调策略引擎的加载与执行。"""
 
 import logging
+import threading
 from typing import Dict, Any, List, Optional
 
 from .base import BaseService, get_global_client, get_global_cache
@@ -218,3 +219,20 @@ class StrategyService(BaseService):
                 "strategies": strategy_meta,
             },
         }
+
+
+# ---------------------------------------------------------------------------
+# 全局单例：避免多个路由模块各自实例化 StrategyService 导致重复加载策略
+# ---------------------------------------------------------------------------
+_global_strategy_service = None
+_strategy_service_lock = threading.Lock()
+
+
+def get_global_strategy_service() -> StrategyService:
+    """获取全局单例 StrategyService（DCL 线程安全）。"""
+    global _global_strategy_service
+    if _global_strategy_service is None:
+        with _strategy_service_lock:
+            if _global_strategy_service is None:
+                _global_strategy_service = StrategyService()
+    return _global_strategy_service

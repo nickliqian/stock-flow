@@ -3,12 +3,12 @@
 from fastapi import APIRouter, Query, HTTPException
 from typing import Optional
 
-from ..services.strategy import StrategyService
+from ..services.strategy import StrategyService, get_global_strategy_service
 from ..utils import make_lazy  # 修复：从共享模块导入 make_lazy，消除与 strategy.py 的重复定义
 
 router = APIRouter(prefix="/api/alpha", tags=["alpha"])
 
-service = StrategyService()
+service = get_global_strategy_service()
 
 
 # ------- 模块级延迟初始化引擎实例（避免每次请求重复创建） -------

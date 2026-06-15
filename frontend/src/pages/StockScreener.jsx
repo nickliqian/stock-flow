@@ -535,7 +535,7 @@ function BasicScreener({ tradeDate, onSelectStock }) {
             <Button
               size="small"
               icon={<ReloadOutlined />}
-              onClick={fetchData}
+              onClick={() => fetchData()}
               loading={loading}
             >
               刷新
@@ -818,7 +818,7 @@ function TechnicalScreener({ tradeDate, onSelectStock }) {
             <Button
               size="small"
               icon={<ReloadOutlined />}
-              onClick={fetchData}
+              onClick={() => fetchData()}
               loading={loading}
               disabled={activeSignals.size === 0}
             >

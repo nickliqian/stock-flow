@@ -4,14 +4,14 @@ import logging
 from fastapi import APIRouter, Query
 from typing import Optional
 
-from ..services.strategy import StrategyService
+from ..services.strategy import StrategyService, get_global_strategy_service
 from ..utils import make_lazy
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/multi-timeframe", tags=["multi-timeframe"])
 
-service = StrategyService()
+service = get_global_strategy_service()
 
 
 def _create_multi_timeframe_engine():

@@ -3,14 +3,14 @@
 import logging
 from fastapi import APIRouter, Query
 
-from ..services.strategy import StrategyService
+from ..services.strategy import StrategyService, get_global_strategy_service
 from ..utils import make_lazy
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/alerts", tags=["alerts"])
 
-service = StrategyService()
+service = get_global_strategy_service()
 
 
 # ------- 模块级延迟初始化引擎实例 -------
