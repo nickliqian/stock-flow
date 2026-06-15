@@ -57,6 +57,7 @@ const MultiTimeframe = React.lazy(() => import('./pages/MultiTimeframe'))
 const ResearchBrowser = React.lazy(() => import('./pages/ResearchBrowser'))
 const VolatilityClustering = React.lazy(() => import('./pages/VolatilityClustering'))
 const SignalAlerts = React.lazy(() => import('./pages/SignalAlerts'))
+const Dashboard = React.lazy(() => import('./pages/Dashboard'))
 
 const { Header, Sider, Content } = Layout
 
@@ -95,6 +96,7 @@ class ErrorBoundary extends Component {
 
 // 路由 key → 菜单 key 映射
 const ROUTE_MAP = {
+  '/': 'dashboard',
   '/overview': 'overview',
   '/sector': 'sector',
   '/stock': 'stock',
@@ -205,6 +207,7 @@ const menuItems = [
 
 // 页面信息映射 — 动态显示页面标题和描述
 const PAGE_INFO = {
+  dashboard: { title: '首页', desc: '市场概览与快捷导航' },
   overview: { title: '大盘总览', desc: '上证/深成/创业板资金流向与涨跌统计' },
   sector: { title: '板块资金', desc: '行业板块资金流向排行与成分股' },
   stock: { title: '个股资金', desc: '个股主力资金流向与趋势分析' },
@@ -241,13 +244,13 @@ const PAGE_INFO = {
 function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
   const [selectedStock, setSelectedStock] = useState(null)
   const [tradeDate, setTradeDate] = useState(null)
 
   // 从 URL 获取当前 tab
-  const activeTab = ROUTE_MAP[location.pathname] || 'overview'
+  const activeTab = ROUTE_MAP[location.pathname] || 'dashboard'
 
   // 菜单点击 → 导航到对应 URL
   const handleMenuClick = ({ key }) => {
@@ -271,6 +274,8 @@ function AppLayout() {
   // 根据路由渲染对应页面
   const renderContent = () => {
     switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard key={`dashboard-${refreshKey}`} />
       case 'overview':
         return (
           <MarketOverview
@@ -458,7 +463,7 @@ function AppLayout() {
           />
         )
       default:
-        return <Navigate to="/overview" replace />
+        return <Navigate to="/" replace />
     }
   }
 
@@ -507,7 +512,7 @@ function AppLayout() {
               cursor: 'pointer',
               borderBottom: '1px solid rgba(255,255,255,0.1)',
             }}
-            onClick={() => navigate('/overview')}
+            onClick={() => navigate('/')}
           >
             {collapsed ? (
               <span style={{ fontSize: 24, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>💹</span>

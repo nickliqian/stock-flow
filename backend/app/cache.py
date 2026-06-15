@@ -829,8 +829,7 @@ class CacheService:
     # --- Query methods ---
 
     def get_market_flow(self, trade_date: str) -> dict:
-        session = self.Session()
-        try:
+        with self._session() as session:
             result = session.execute(
                 text("SELECT * FROM market_flow WHERE trade_date = :td LIMIT 1"),
                 {"td": trade_date},
@@ -838,12 +837,9 @@ class CacheService:
             if not result:
                 return None
             return dict(result._mapping)
-        finally:
-            session.close()
 
     def get_north_fund(self, trade_date: str) -> dict:
-        session = self.Session()
-        try:
+        with self._session() as session:
             result = session.execute(
                 text("SELECT * FROM north_fund_flow WHERE trade_date = :td LIMIT 1"),
                 {"td": trade_date},
@@ -851,27 +847,21 @@ class CacheService:
             if not result:
                 return None
             return dict(result._mapping)
-        finally:
-            session.close()
 
     def get_north_fund_range(self, start_date: str, end_date: str) -> list:
-        session = self.Session()
-        try:
+        with self._session() as session:
             results = session.execute(
                 text("SELECT * FROM north_fund_flow WHERE trade_date BETWEEN :s AND :e ORDER BY trade_date"),
                 {"s": start_date, "e": end_date},
             ).fetchall()
             return [dict(r._mapping) for r in results]
-        finally:
-            session.close()
 
     def get_stock_flow(self, trade_date: str, ts_code: str) -> dict:
         """Get stock flow data with name from stock_basic.
 
         moneyflow API does not return name, so we JOIN stock_basic to get it.
         """
-        session = self.Session()
-        try:
+        with self._session() as session:
             result = session.execute(
                 text("""
                     SELECT sf.*, sb.name
@@ -885,12 +875,9 @@ class CacheService:
             if not result:
                 return None
             return dict(result._mapping)
-        finally:
-            session.close()
 
     def get_dragon_tiger(self, trade_date: str, ts_code: str = None) -> list:
-        session = self.Session()
-        try:
+        with self._session() as session:
             if ts_code:
                 results = session.execute(
                     text("SELECT * FROM dragon_tiger WHERE trade_date = :td AND ts_code = :tc"),
@@ -902,13 +889,10 @@ class CacheService:
                     {"td": trade_date},
                 ).fetchall()
             return [dict(r._mapping) for r in results]
-        finally:
-            session.close()
 
     # [修改] 问题8：添加 sort_order 参数支持 asc/desc 排序
     def get_sector_flows(self, trade_date: str, page: int = 1, size: int = 20, sort_order: str = "desc", sort_by: str = "net_inflow") -> dict:
-        session = self.Session()
-        try:
+        with self._session() as session:
             offset = (page - 1) * size
             total = session.execute(
                 text("SELECT COUNT(*) FROM sector_flow WHERE trade_date = :td"),
@@ -933,12 +917,9 @@ class CacheService:
                 "size": size,
                 "data": [dict(r._mapping) for r in results],
             }
-        finally:
-            session.close()
 
     def search_sectors(self, query: str, trade_date: str = None) -> list:
-        session = self.Session()
-        try:
+        with self._session() as session:
             q = f"%{query}%"
             if trade_date:
                 results = session.execute(
@@ -959,12 +940,9 @@ class CacheService:
                     {"q": q},
                 ).fetchall()
             return [dict(r._mapping) for r in results]
-        finally:
-            session.close()
 
     def search_stocks(self, query: str) -> list:
-        session = self.Session()
-        try:
+        with self._session() as session:
             q = f"%{query}%"
             results = session.execute(
                 text("""
@@ -976,19 +954,14 @@ class CacheService:
                 {"q1": q, "q2": q, "q3": q},
             ).fetchall()
             return [dict(r._mapping) for r in results]
-        finally:
-            session.close()
 
     def get_sector_members(self, sector_code: str) -> list:
-        session = self.Session()
-        try:
+        with self._session() as session:
             results = session.execute(
                 text("SELECT member_code, member_name FROM sector_member WHERE sector_code = :sc"),
                 {"sc": sector_code},
             ).fetchall()
             return [dict(r._mapping) for r in results]
-        finally:
-            session.close()
 
     def get_all_sector_members(self) -> dict:
         """Return {sector_code: [member_code, ...]} for all sectors.
@@ -1033,8 +1006,7 @@ class CacheService:
 
     def get_all_ths_index(self) -> list:
         """Get all ths_index records."""
-        session = self.Session()
-        try:
+        with self._session() as session:
             # Check if table exists
             try:
                 results = session.execute(text("SELECT * FROM ths_index")).fetchall()
@@ -1042,22 +1014,14 @@ class CacheService:
             except Exception:
                 logger.debug("get_all_ths_index query failed: %s", exc_info=True)
                 return []
-        finally:
-            session.close()
 
     def get_stock_basic_from_db(self) -> list:
         """Get all stock_basic records from DB."""
-        session = self.Session()
-        try:
+        with self._session() as session:
             results = session.execute(
                 text("SELECT ts_code, name FROM stock_basic")
             ).fetchall()
             return [dict(r._mapping) for r in results]
-        except Exception:
-            logger.debug("get_stock_basic_from_db query failed: %s", exc_info=True)
-            return []
-        finally:
-            session.close()
 
     def get_sector_trend(self, sector_code: str, days: int = 30) -> list:
         """Get historical flow trend for a sector across trade dates.
@@ -1065,8 +1029,7 @@ class CacheService:
         Returns list of {trade_date, sector_code, sector_name, net_inflow,
                          large_net, large_pct} ordered by trade_date ASC.
         """
-        session = self.Session()
-        try:
+        with self._session() as session:
             results = session.execute(
                 text(
                     """SELECT trade_date, sector_code, sector_name, net_inflow, large_net, large_pct
@@ -1080,8 +1043,6 @@ class CacheService:
             rows = [dict(r._mapping) for r in results]
             rows.reverse()
             return rows
-        finally:
-            session.close()
 
     def upsert_sector_daily(self, data: pd.DataFrame, ts_code: str):
         """Upsert sector_daily records in batch (from ths_daily API)."""
@@ -1100,8 +1061,7 @@ class CacheService:
 
     def get_sector_daily(self, ts_code: str, days: int = 30) -> list:
         """Get sector daily price/volume data ordered by trade_date DESC."""
-        session = self.Session()
-        try:
+        with self._session() as session:
             results = session.execute(
                 text("""
                     SELECT trade_date, ts_code, close, open, high, low,
@@ -1114,8 +1074,6 @@ class CacheService:
                 {"tc": ts_code, "limit": days},
             ).fetchall()
             return [dict(r._mapping) for r in results]
-        finally:
-            session.close()
 
     def get_sector_daily_batch(self, ts_codes: list, trade_date: str = None) -> dict:
         """Batch-get latest sector_daily for multiple ts_codes in one query.
@@ -1125,8 +1083,7 @@ class CacheService:
         """
         if not ts_codes:
             return {}
-        session = self.Session()
-        try:
+        with self._session() as session:
             placeholders = ", ".join([f":tc{i}" for i in range(len(ts_codes))])
             params = {}
             for i, tc in enumerate(ts_codes):
@@ -1161,8 +1118,6 @@ class CacheService:
 
             results = session.execute(text(query), params).fetchall()
             return {dict(r._mapping)["ts_code"]: dict(r._mapping) for r in results}
-        finally:
-            session.close()
 
     def upsert_daily_basic(self, data: pd.DataFrame, ts_code: str):
         """Upsert daily_basic records in batch.
@@ -1177,8 +1132,7 @@ class CacheService:
 
     def get_daily_basic(self, ts_code: str, trade_date: str = None) -> dict:
         """Get daily_basic record for a stock."""
-        session = self.Session()
-        try:
+        with self._session() as session:
             if trade_date:
                 result = session.execute(
                     text("""
@@ -1201,8 +1155,6 @@ class CacheService:
             if not result:
                 return None
             return dict(result._mapping)
-        finally:
-            session.close()
 
     def batch_upsert_daily_basic(self, data: pd.DataFrame, trade_date: str):
         """Batch upsert daily_basic for specific stocks on a trade date.
@@ -1397,12 +1349,9 @@ class CacheService:
             LEFT JOIN moneyflow_dc mf ON db.ts_code = mf.ts_code AND db.trade_date = mf.trade_date
             WHERE {" AND ".join(where_clauses)}
         """
-        session = self.Session()
-        try:
+        with self._session() as session:
             results = session.execute(text(sql), params).fetchall()
             return [dict(r._mapping) for r in results]
-        finally:
-            session.close()
 
     def upsert_limit_list(self, data: pd.DataFrame, trade_date: str):
         """Upsert limit_list records in batch.
@@ -1475,8 +1424,7 @@ class CacheService:
 
     def get_limit_list(self, trade_date: str) -> list:
         """Get all limit_list records for a trade date."""
-        session = self.Session()
-        try:
+        with self._session() as session:
             results = session.execute(
                 text("""
                     SELECT id, trade_date, ts_code, industry, name, close, pct_chg,
@@ -1489,8 +1437,6 @@ class CacheService:
                 {"td": trade_date},
             ).fetchall()
             return [dict(r._mapping) for r in results]
-        finally:
-            session.close()
 
     def upsert_index_daily(self, data: pd.DataFrame, ts_code: str):
         """Upsert index_daily records in batch."""
@@ -1509,8 +1455,7 @@ class CacheService:
 
     def get_index_daily(self, ts_code: str, trade_date: str = None) -> dict:
         """Get index_daily record for an index."""
-        session = self.Session()
-        try:
+        with self._session() as session:
             if trade_date:
                 result = session.execute(
                     text("""
@@ -1533,8 +1478,6 @@ class CacheService:
             if not result:
                 return None
             return dict(result._mapping)
-        finally:
-            session.close()
 
     def upsert_stk_factor(self, data: pd.DataFrame, trade_date: str):
         """Upsert stk_factor records in batch.
